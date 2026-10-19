@@ -1,0 +1,32 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload --reload-dir /app/app
+    env_file:
+      - .env
+    user: "${API_UID:-1000}:${API_GID:-1000}"
+    volumes:
+      - ./app:/app/app:ro
+      - ./imagenes:/app/uploads/partes
+    ports:
+      - "8001:8000"
+    networks:
+      - orovalle-api-dev-network
+    init: true
+    container_name: orovalle-api
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  orovalle-api-network:
+    name: orovalle-api-dev-network
+    driver: bridge
